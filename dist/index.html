@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Build Error</title>
+</head>
+<body>
+  <script id="build-error-script">
+
+// BUILD ERROR DETECTED - Injected by watch-build-errors.js
+(function() {
+  const errorMsg = `
+  <error>
+✓ 1 modules transformed.
+[vite]: Rollup failed to resolve import "/src/index.tsx" from "/home/user/index.html".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+\`build.rollupOptions.external\`
+
+<error/>
+`;
+  
+  // Send error to parent window via postMessage
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'BUILD_ERROR',
+      error: errorMsg,
+      timestamp: new Date().toISOString(),
+      source: 'vite-build-watcher'
+    }, '*');
+    console.log('📤 Error sent to parent via postMessage');
+  }
+  
+  // Throw the error to appear in browser console
+  const buildError = new Error('BUILD ERROR');
+  buildError.name = '🚨 Vite Build Error';
+  buildError.message = errorMsg;
+  
+  // Log styled error before throwing
+  console.error('%c' + errorMsg, 'color: #ff0000; font-weight: bold; font-family: monospace;');
+  
+  // Display error overlay in the browser
+  if (typeof document !== 'undefined') {
+    const existingOverlay = document.getElementById('build-error-overlay');
+    if (existingOverlay) {
+      existingOverlay.remove();
+    }
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'build-error-overlay';
+    overlay.innerHTML = `
+      <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 999999; color: #ff6b6b; font-family: monospace; padding: 20px; overflow: auto;">
+        <div style="max-width: 1200px; margin: 0 auto;">
+          <h2 style="color: #ff6b6b; margin-bottom: 20px; font-size: 24px;">🚨 Build Error</h2>
+          <pre style="background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.5;">${errorMsg.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+          <button onclick="document.getElementById('build-error-overlay').remove()" style="margin-top: 20px; padding: 10px 20px; background: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold;">Close Overlay</button>
+        </div>
+      </div>
+    `;
+    overlay.style.display = 'none';
+    document.body.appendChild(overlay);
+  }
+  
+  // Throw the error so it appears in console with stack trace
+  throw buildError;
+})();
+
+  </script>
+</body>
+</html>
